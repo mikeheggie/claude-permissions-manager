@@ -4,6 +4,7 @@ import { SEOHead } from '@/components/blog/SEOHead'
 import { MDXProvider } from '@/components/blog/MDXProvider'
 import { useTheme } from '@/hooks/useTheme'
 import { ThemeToggle } from '@/components/ThemeToggle'
+import { GitHubLink } from '@/components/GitHubLink'
 import { formatDate, calculateReadingTime } from '@/utils/blog'
 import { getBlogPosts } from '@/content/blog'
 
@@ -66,6 +67,7 @@ export function BlogPost() {
             >
               Blog
             </Link>
+            <GitHubLink />
             <ThemeToggle
               theme={theme}
               onToggle={toggleTheme}
@@ -184,6 +186,9 @@ export function BlogPost() {
               Claude Code permissions
             </a>
           </p>
+          <div className="mt-2 flex justify-center">
+            <GitHubLink label="Open source on GitHub" className="text-foreground-muted" />
+          </div>
         </div>
       </footer>
     </div>

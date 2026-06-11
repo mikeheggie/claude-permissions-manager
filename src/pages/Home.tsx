@@ -15,6 +15,7 @@ import { useTheme } from '@/hooks/useTheme'
 import { useFeedback } from '@/hooks/useFeedback'
 import { useMultiFileMerge } from '@/hooks/useMultiFileMerge'
 import { ThemeToggle } from '@/components/ThemeToggle'
+import { GitHubLink } from '@/components/GitHubLink'
 import { Toast } from '@/components/Toast'
 import { CopyFallbackModal } from '@/components/CopyFallbackModal'
 import { FeedbackBanner } from '@/components/FeedbackBanner'
@@ -278,6 +279,7 @@ export function Home() {
             >
               Blog
             </Link>
+            <GitHubLink />
             <ThemeToggle
               theme={theme}
               onToggle={toggleTheme}
@@ -452,12 +454,15 @@ export function Home() {
               Claude Code permissions
             </a>
           </p>
-          <button
-            onClick={feedback.openModal}
-            className="mt-2 text-foreground-muted hover:text-accent-primary transition-colors"
-          >
-            Give Feedback
-          </button>
+          <div className="mt-2 flex items-center justify-center gap-4">
+            <GitHubLink label="Open source on GitHub" className="text-foreground-muted" />
+            <button
+              onClick={feedback.openModal}
+              className="text-foreground-muted hover:text-accent-primary transition-colors"
+            >
+              Give Feedback
+            </button>
+          </div>
         </div>
       </footer>
 
