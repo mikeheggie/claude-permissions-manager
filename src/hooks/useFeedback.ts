@@ -6,6 +6,9 @@
 import { useState, useCallback, useEffect } from 'react';
 import { FEEDBACK_SUBMITTED_KEY, FEEDBACK_BANNER_DISMISSED_KEY } from '@/types/feedback';
 
+/** How long a user must be on the page before the banner appears */
+export const BANNER_DELAY_MS = 60_000;
+
 export interface UseFeedbackReturn {
   /** Whether the banner should be visible */
   showBanner: boolean;
@@ -53,8 +56,17 @@ export function useFeedback(): UseFeedbackReturn {
   // Modal visibility state
   const [showModal, setShowModal] = useState(false);
 
-  // Banner is visible if not submitted and not dismissed
-  const showBanner = !hasSubmitted && !bannerDismissed;
+  // Only surface the banner once the user has spent some time on the page
+  const [delayElapsed, setDelayElapsed] = useState(false);
+
+  useEffect(() => {
+    if (hasSubmitted || bannerDismissed) return;
+    const timer = window.setTimeout(() => setDelayElapsed(true), BANNER_DELAY_MS);
+    return () => window.clearTimeout(timer);
+  }, [hasSubmitted, bannerDismissed]);
+
+  // Banner is visible if not submitted, not dismissed, and the delay has passed
+  const showBanner = delayElapsed && !hasSubmitted && !bannerDismissed;
 
   const openModal = useCallback(() => {
     setShowModal(true);

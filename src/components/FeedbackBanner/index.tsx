@@ -4,6 +4,7 @@
  */
 
 import { motion, AnimatePresence } from 'framer-motion';
+import { REPO_URL, GitHubMark } from '@/components/GitHubLink';
 
 export interface FeedbackBannerProps {
   /** Whether the banner is visible */
@@ -57,12 +58,22 @@ export function FeedbackBanner({
                     </svg>
                   </div>
                   <p className="text-white text-sm font-medium truncate">
-                    Help us improve! Share your feedback on this tool.
+                    Enjoying this tool? Help us improve it.
                   </p>
                 </div>
 
                 {/* Actions */}
                 <div className="flex items-center gap-2 flex-shrink-0">
+                  <a
+                    href={REPO_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hidden sm:inline-flex items-center gap-1.5 px-4 py-1.5 text-sm font-semibold rounded-lg border border-white/40 text-white hover:bg-white/10 transition-colors"
+                    aria-label="Contribute on GitHub"
+                  >
+                    <GitHubMark className="w-4 h-4" />
+                    Contribute
+                  </a>
                   <button
                     onClick={onOpenForm}
                     className="px-4 py-1.5 text-sm font-semibold rounded-lg bg-white text-accent-primary hover:bg-white/90 transition-colors shadow-sm"
