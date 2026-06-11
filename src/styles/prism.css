@@ -1,0 +1,281 @@
+/* Prism.js Tomorrow Night Theme - Adapted for Yes to All */
+
+/* Light mode overrides for better contrast */
+:root code[class*="language-"],
+:root pre[class*="language-"] {
+  color: #374151;
+}
+
+:root .token.comment,
+:root .token.block-comment,
+:root .token.prolog,
+:root .token.doctype,
+:root .token.cdata {
+  color: #6b7280;
+}
+
+:root .token.punctuation {
+  color: #374151;
+}
+
+:root .token.tag,
+:root .token.attr-name,
+:root .token.namespace,
+:root .token.deleted {
+  color: #be123c;
+}
+
+:root .token.function-name {
+  color: #1d4ed8;
+}
+
+:root .token.boolean,
+:root .token.number,
+:root .token.function {
+  color: #c2410c;
+}
+
+:root .token.property,
+:root .token.class-name,
+:root .token.constant,
+:root .token.symbol {
+  color: #b45309;
+}
+
+:root .token.selector,
+:root .token.important,
+:root .token.atrule,
+:root .token.keyword,
+:root .token.builtin {
+  color: #7c3aed;
+}
+
+:root .token.string,
+:root .token.char,
+:root .token.attr-value,
+:root .token.regex,
+:root .token.variable {
+  color: #047857;
+}
+
+:root .token.operator,
+:root .token.entity,
+:root .token.url {
+  color: #0891b2;
+}
+
+:root .token.inserted {
+  color: #047857;
+}
+
+/* Dark mode - Tomorrow Night theme colors */
+.dark code[class*="language-"],
+.dark pre[class*="language-"] {
+  color: #ccc;
+}
+
+.dark .token.comment,
+.dark .token.block-comment,
+.dark .token.prolog,
+.dark .token.doctype,
+.dark .token.cdata {
+  color: #999;
+}
+
+.dark .token.punctuation {
+  color: #ccc;
+}
+
+.dark .token.tag,
+.dark .token.attr-name,
+.dark .token.namespace,
+.dark .token.deleted {
+  color: #e2777a;
+}
+
+.dark .token.function-name {
+  color: #6196cc;
+}
+
+.dark .token.boolean,
+.dark .token.number,
+.dark .token.function {
+  color: #f08d49;
+}
+
+.dark .token.property,
+.dark .token.class-name,
+.dark .token.constant,
+.dark .token.symbol {
+  color: #f8c555;
+}
+
+.dark .token.selector,
+.dark .token.important,
+.dark .token.atrule,
+.dark .token.keyword,
+.dark .token.builtin {
+  color: #cc99cd;
+}
+
+.dark .token.string,
+.dark .token.char,
+.dark .token.attr-value,
+.dark .token.regex,
+.dark .token.variable {
+  color: #7ec699;
+}
+
+.dark .token.operator,
+.dark .token.entity,
+.dark .token.url {
+  color: #67cdcc;
+}
+
+.dark .token.inserted {
+  color: #7ec699;
+}
+
+/* Base styles (fallback) */
+code[class*="language-"],
+pre[class*="language-"] {
+  color: #374151;
+  background: none;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 0.875rem;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.6;
+  tab-size: 2;
+  hyphens: none;
+}
+
+/* Code block backgrounds */
+pre[class*="language-"] {
+  background: #f5f5f5;
+  border: 1px solid #e5e5e5;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  overflow: auto;
+}
+
+.dark pre[class*="language-"] {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+/* Selection */
+code[class*="language-"]::selection,
+pre[class*="language-"]::selection,
+code[class*="language-"] *::selection,
+pre[class*="language-"] *::selection {
+  background: #3d4f5f;
+}
+
+/* Inline code */
+:not(pre) > code[class*="language-"] {
+  padding: 0.1em 0.3em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+/* Tokens */
+.token.comment,
+.token.block-comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #999;
+}
+
+.token.punctuation {
+  color: #ccc;
+}
+
+.token.tag,
+.token.attr-name,
+.token.namespace,
+.token.deleted {
+  color: #e2777a;
+}
+
+.token.function-name {
+  color: #6196cc;
+}
+
+.token.boolean,
+.token.number,
+.token.function {
+  color: #f08d49;
+}
+
+.token.property,
+.token.class-name,
+.token.constant,
+.token.symbol {
+  color: #f8c555;
+}
+
+.token.selector,
+.token.important,
+.token.atrule,
+.token.keyword,
+.token.builtin {
+  color: #cc99cd;
+}
+
+.token.string,
+.token.char,
+.token.attr-value,
+.token.regex,
+.token.variable {
+  color: #7ec699;
+}
+
+.token.operator,
+.token.entity,
+.token.url {
+  color: #67cdcc;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+.token.inserted {
+  color: #7ec699;
+}
+
+/* Line numbers */
+.line-number::before {
+  display: inline-block;
+  width: 1rem;
+  margin-right: 1rem;
+  text-align: right;
+  color: #666;
+  content: attr(line);
+}
+
+/* Line highlighting */
+.highlight-line {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-left: 3px solid #d66a4a;
+  margin-left: -1rem;
+  margin-right: -1rem;
+  padding-left: calc(1rem - 3px);
+  padding-right: 1rem;
+}
+
+/* Dark mode adjustments are handled by Tailwind's dark: variants */
