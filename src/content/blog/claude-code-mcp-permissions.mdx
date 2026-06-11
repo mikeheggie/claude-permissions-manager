@@ -1,0 +1,519 @@
+---
+title: "Claude Code MCP Permissions: Allow Tools Without Constant Prompts"
+slug: "claude-code-mcp-permissions"
+date: "2026-01-23"
+description: "Configure Claude Code permissions for MCP servers to stop repetitive prompts while maintaining security. Learn the mcp__ permission syntax and best practices."
+author: "Yes to All Team"
+tags: ["claude-code", "mcp", "permissions", "tools"]
+---
+
+## What Are MCP Servers?
+
+MCP (Model Context Protocol) is a standard that lets Claude Code interact with external tools and services. MCP servers extend Claude's capabilities beyond the built-in tools, enabling integrations like:
+
+- **Filesystem access** - Read and write files in controlled directories
+- **GitHub integration** - Create issues, PRs, review code
+- **Database queries** - Read and search database content
+- **Web browsing** - Fetch and parse web content
+- **Custom tools** - Any tool your organization builds
+
+When you use MCP servers, Claude needs permission to call their tools. Without proper configuration, you'll face constant permission prompts.
+
+## The MCP Permission Syntax
+
+MCP tool permissions follow a specific format:
+
+```
+mcp__<server-name>__<tool-name>
+```
+
+For example:
+- `mcp__filesystem__read_file` - The read_file tool from the filesystem server
+- `mcp__github__create_issue` - The create_issue tool from the github server
+- `mcp__postgres__query` - The query tool from the postgres server
+
+### Server-Wide Permissions
+
+To allow all tools from a specific MCP server:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "mcp__filesystem"
+    ]
+  }
+}
+```
+
+This allows all tools from the filesystem server.
+
+### Specific Tool Permissions
+
+To allow only specific tools:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "mcp__filesystem__read_file",
+      "mcp__filesystem__list_directory"
+    ]
+  }
+}
+```
+
+This allows reading files and listing directories, but not writing or deleting.
+
+## Common MCP Permission Patterns
+
+### Filesystem Server
+
+The filesystem MCP server provides file operations within specified directories.
+
+**Read-only access:**
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "mcp__filesystem__read_file",
+      "mcp__filesystem__list_directory",
+      "mcp__filesystem__search_files",
+      "mcp__filesystem__get_file_info"
+    ]
+  }
+}
+```
+
+**Full access:**
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "mcp__filesystem"
+    ]
+  }
+}
+```
+
+**Read with selective write:**
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "mcp__filesystem__read_file",
+      "mcp__filesystem__list_directory",
+      "mcp__filesystem__write_file"
+    ],
+    "deny": [
+      "mcp__filesystem__delete_file"
+    ]
+  }
+}
+```
+
+### GitHub Server
+
+The GitHub MCP server provides repository operations.
+
+**Read-only for code review:**
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "mcp__github__get_file_contents",
+      "mcp__github__list_commits",
+      "mcp__github__get_pull_request",
+      "mcp__github__list_pull_request_files"
+    ]
+  }
+}
+```
+
+**Issue and PR management:**
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "mcp__github__get_issue",
+      "mcp__github__create_issue",
+      "mcp__github__update_issue",
+      "mcp__github__get_pull_request",
+      "mcp__github__create_pull_request",
+      "mcp__github__add_pull_request_comment"
+    ]
+  }
+}
+```
+
+**Full access (be cautious):**
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "mcp__github"
+    ],
+    "deny": [
+      "mcp__github__delete_repository"
+    ]
+  }
+}
+```
+
+### Database Servers
+
+Database MCP servers (postgres, sqlite, etc.) need careful permission management.
+
+**Read-only queries:**
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "mcp__postgres__query"
+    ],
+    "deny": [
+      "mcp__postgres__execute"
+    ]
+  }
+}
+```
+
+**Schema inspection:**
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "mcp__postgres__list_tables",
+      "mcp__postgres__describe_table",
+      "mcp__postgres__query"
+    ]
+  }
+}
+```
+
+### Web/Browser Servers
+
+Web MCP servers fetch and process web content.
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "mcp__fetch__fetch_url",
+      "mcp__puppeteer__navigate",
+      "mcp__puppeteer__screenshot"
+    ]
+  }
+}
+```
+
+## Security Considerations for MCP Servers
+
+### Third-Party MCP Servers
+
+When using MCP servers from third parties, be cautious:
+
+1. **Review the source code** - Understand what tools are available
+2. **Start with deny-all** - Block all tools, then allow specific ones
+3. **Audit tool capabilities** - Some tools might have broader access than their names suggest
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "mcp__third_party__safe_read_tool"
+    ],
+    "deny": [
+      "mcp__third_party"
+    ]
+  }
+}
+```
+
+The deny rule blocks all tools from the server, while the allow rule permits only the specific safe tool.
+
+### Combining MCP with Standard Permissions
+
+Your settings file can include both MCP and standard permissions:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
+      "Bash(npm run:*)",
+      "Bash(git:*)",
+      "mcp__filesystem__read_file",
+      "mcp__github__get_pull_request"
+    ],
+    "deny": [
+      "Read(**/.env*)",
+      "Bash(rm -rf:*)",
+      "mcp__filesystem__delete_file"
+    ]
+  }
+}
+```
+
+### Environment-Specific MCP Permissions
+
+Use different permissions for development vs production:
+
+**Development settings:**
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "mcp__filesystem",
+      "mcp__postgres__query",
+      "mcp__postgres__execute"
+    ]
+  }
+}
+```
+
+**Production/staging settings:**
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "mcp__filesystem__read_file",
+      "mcp__postgres__query"
+    ],
+    "deny": [
+      "mcp__postgres__execute",
+      "mcp__filesystem__write_file",
+      "mcp__filesystem__delete_file"
+    ]
+  }
+}
+```
+
+## Configuring MCP Servers
+
+MCP server definitions don't live in `settings.json`. Project-scoped servers go in a `.mcp.json` file at the project root (which you can commit and share with your team), and personal servers are registered with `claude mcp add`. Your `settings.json` only holds the `mcp__...` permission rules that control what those servers are allowed to do.
+
+A project's `.mcp.json` looks like this:
+
+```json
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/allowed/dir"]
+    }
+  }
+}
+```
+
+And the matching permission rule lives in `settings.json`:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "mcp__filesystem"
+    ]
+  }
+}
+```
+
+### Common MCP Server Configurations
+
+Each of these is a `.mcp.json` entry:
+
+**Filesystem:**
+
+```json
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/Users/you/projects"]
+    }
+  }
+}
+```
+
+**GitHub:**
+
+```json
+{
+  "mcpServers": {
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "your-token-here"
+      }
+    }
+  }
+}
+```
+
+**PostgreSQL:**
+
+```json
+{
+  "mcpServers": {
+    "postgres": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres"],
+      "env": {
+        "DATABASE_URL": "postgresql://user:pass@localhost:5432/db"
+      }
+    }
+  }
+}
+```
+
+## Complete MCP Configuration Example
+
+Here's a comprehensive configuration for a full-stack developer. The servers are defined in `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/Users/you/projects"]
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"]
+    },
+    "postgres": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres"]
+    }
+  }
+}
+```
+
+And the permissions that govern them live in `settings.json`:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
+      "Bash(npm:*)",
+      "Bash(git:*)",
+      "Bash(node:*)",
+      "mcp__filesystem__read_file",
+      "mcp__filesystem__list_directory",
+      "mcp__filesystem__write_file",
+      "mcp__github__get_pull_request",
+      "mcp__github__create_pull_request",
+      "mcp__github__get_issue",
+      "mcp__github__create_issue",
+      "mcp__postgres__query",
+      "mcp__postgres__list_tables"
+    ],
+    "deny": [
+      "Read(**/.env*)",
+      "Bash(rm -rf:*)",
+      "Bash(git push --force:*)",
+      "mcp__filesystem__delete_file",
+      "mcp__github__delete_repository",
+      "mcp__postgres__execute"
+    ],
+    "ask": [
+      "Bash(git push:*)",
+      "mcp__github__merge_pull_request"
+    ]
+  }
+}
+```
+
+## Using Yes to All for MCP Permissions
+
+The [Yes to All tool](/) helps manage MCP permissions alongside your standard settings:
+
+### Merging MCP Permissions
+
+1. Upload your current settings with MCP permissions
+2. Upload additional settings files with new MCP patterns
+3. Review the merged result to ensure no conflicts
+4. Export and save
+
+### Creating MCP Permission Templates
+
+1. Start with a baseline configuration
+2. Add MCP server permissions for your workflow
+3. Export as a template for new projects
+
+### Auditing MCP Access
+
+1. Upload settings from multiple projects
+2. Merge to see all MCP permissions in use
+3. Identify overly permissive patterns
+4. Create a standardized, secure configuration
+
+## Troubleshooting MCP Permissions
+
+### "Permission denied" for MCP tools
+
+Check that your permission pattern matches exactly:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "mcp__filesystem__read_file"
+    ]
+  }
+}
+```
+
+Not:
+- `mcp_filesystem_read_file` (wrong underscores)
+- `mcp__filesystem_read_file` (missing double underscore)
+- `mcp__filesystem__readFile` (wrong tool name)
+
+### MCP server not starting
+
+Verify the server's entry in `.mcp.json` (or `claude mcp list`):
+
+1. Check that the command exists (`npx`, `node`, etc.)
+2. Verify the package name is correct
+3. Check environment variables are set
+4. Look at Claude Code logs for errors
+
+### Prompts still appearing
+
+If you're still getting prompted:
+
+1. Verify the server name in your permission rule matches the name the server is registered under
+2. Check for typos in tool names
+3. Ensure the permission is in `allow`, not `ask`
+4. Restart Claude Code after changing settings
+
+## Conclusion
+
+MCP servers extend Claude Code's capabilities significantly, but they require thoughtful permission management. By understanding the `mcp__server__tool` syntax and following security best practices, you can:
+
+- Stop repetitive permission prompts
+- Maintain security with deny rules
+- Use powerful integrations safely
+- Manage permissions across multiple MCP servers
+
+Use the [Yes to All tool](/) to merge your MCP permissions with your standard settings, creating a unified configuration that keeps you productive and secure.

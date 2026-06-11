@@ -1,0 +1,398 @@
+---
+title: "Secure Your Claude Code Setup: Block Sensitive Files and Dangerous Commands"
+slug: "claude-code-security-permissions"
+date: "2026-01-23"
+description: "Learn how to configure Claude Code deny rules to protect sensitive files like .env and secrets, block dangerous commands, and maintain security while staying productive."
+author: "Yes to All Team"
+tags: ["claude-code", "security", "permissions", "configuration"]
+---
+
+## Why Security Matters with AI Coding Assistants
+
+AI coding assistants like Claude Code are incredibly powerful, but that power comes with responsibility. Claude can read files, execute commands, and make changes across your codebase. Without proper guardrails, it could accidentally expose secrets, delete important files, or execute commands you didn't intend.
+
+The good news: Claude Code has a robust permission system that lets you define exactly what it can and cannot do. This guide shows you how to configure security-first permissions.
+
+## The Deny-First Approach
+
+Claude Code evaluates permissions in this order:
+
+1. **Deny rules checked first** - If a deny rule matches, the action is blocked
+2. **Ask rules checked second** - If an ask rule matches, Claude prompts for confirmation
+3. **Allow rules checked last** - If an allow rule matches, the action proceeds
+
+This means deny rules always win. You can have broad allow patterns while using deny rules to block specific dangerous variations.
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Bash(git:*)"
+    ],
+    "deny": [
+      "Bash(git push --force:*)",
+      "Bash(git reset --hard:*)"
+    ]
+  }
+}
+```
+
+In this example, most git commands are allowed, but force push and hard reset are blocked.
+
+## Protecting Sensitive Files
+
+### Environment Files
+
+Your `.env` files contain API keys, database credentials, and other secrets. Block access to these files:
+
+```json
+{
+  "permissions": {
+    "deny": [
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Edit(.env)",
+      "Edit(.env.*)",
+      "Edit(**/.env)",
+      "Edit(**/.env.*)"
+    ]
+  }
+}
+```
+
+### Credentials and Secrets
+
+Extend protection to other sensitive files:
+
+```json
+{
+  "permissions": {
+    "deny": [
+      "Read(**/credentials*)",
+      "Read(**/secrets*)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(**/*_rsa)",
+      "Read(**/*_rsa.pub)",
+      "Read(**/.ssh/*)",
+      "Read(**/id_*)"
+    ]
+  }
+}
+```
+
+### Configuration Files with Secrets
+
+Some config files may contain embedded secrets:
+
+```json
+{
+  "permissions": {
+    "deny": [
+      "Read(**/config.production.*)",
+      "Read(**/secrets.json)",
+      "Read(**/secrets.yaml)",
+      "Read(**/vault.json)"
+    ]
+  }
+}
+```
+
+## Blocking Dangerous Commands
+
+### Destructive Operations
+
+Block commands that can cause irreversible damage:
+
+```json
+{
+  "permissions": {
+    "deny": [
+      "Bash(rm -rf:*)",
+      "Bash(rm -r /*:*)",
+      "Bash(rmdir:*)",
+      "Bash(sudo rm:*)",
+      "Bash(> /dev/:*)",
+      "Bash(dd if=:*)"
+    ]
+  }
+}
+```
+
+### System-Level Commands
+
+Block commands that modify system state:
+
+```json
+{
+  "permissions": {
+    "deny": [
+      "Bash(sudo:*)",
+      "Bash(su :*)",
+      "Bash(chmod 777:*)",
+      "Bash(chown:*)",
+      "Bash(systemctl:*)",
+      "Bash(service :*)"
+    ]
+  }
+}
+```
+
+### Network and External Access
+
+Control what can access the network:
+
+```json
+{
+  "permissions": {
+    "deny": [
+      "Bash(curl:*)",
+      "Bash(wget:*)",
+      "Bash(ssh :*)",
+      "Bash(scp :*)",
+      "Bash(rsync:*)"
+    ]
+  }
+}
+```
+
+If you need curl for specific purposes, use allow rules for specific URLs while keeping the broad deny:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl https://api.github.com:*)",
+      "Bash(curl https://registry.npmjs.org:*)"
+    ],
+    "deny": [
+      "Bash(curl:*)"
+    ]
+  }
+}
+```
+
+### Publishing and Deployment
+
+Prevent accidental publishes:
+
+```json
+{
+  "permissions": {
+    "deny": [
+      "Bash(npm publish:*)",
+      "Bash(yarn publish:*)",
+      "Bash(pnpm publish:*)",
+      "Bash(cargo publish:*)",
+      "Bash(gem push:*)",
+      "Bash(pip upload:*)",
+      "Bash(twine upload:*)"
+    ]
+  }
+}
+```
+
+## Common Security Patterns by Project Type
+
+### Web Application
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
+      "Bash(npm run:*)",
+      "Bash(npm install:*)",
+      "Bash(npm test:*)",
+      "Bash(git:*)"
+    ],
+    "deny": [
+      "Read(**/.env*)",
+      "Read(**/secrets*)",
+      "Edit(**/.env*)",
+      "Bash(npm publish:*)",
+      "Bash(git push --force:*)",
+      "Bash(rm -rf:*)",
+      "Bash(sudo:*)"
+    ]
+  }
+}
+```
+
+### API Server
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
+      "Bash(npm:*)",
+      "Bash(node:*)",
+      "Bash(git:*)"
+    ],
+    "deny": [
+      "Read(**/.env*)",
+      "Read(**/config.production.*)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Edit(**/.env*)",
+      "Edit(**/config.production.*)",
+      "Bash(npm publish:*)",
+      "Bash(curl:*)",
+      "Bash(wget:*)",
+      "Bash(rm -rf:*)",
+      "Bash(sudo:*)"
+    ]
+  }
+}
+```
+
+### Infrastructure / DevOps
+
+For infrastructure projects, be extra cautious:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash(terraform plan:*)",
+      "Bash(terraform fmt:*)",
+      "Bash(terraform validate:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)"
+    ],
+    "deny": [
+      "Read(**/.env*)",
+      "Read(**/terraform.tfvars)",
+      "Read(**/*.tfstate)",
+      "Read(**/secrets*)",
+      "Write",
+      "Edit",
+      "Bash(terraform apply:*)",
+      "Bash(terraform destroy:*)",
+      "Bash(kubectl:*)",
+      "Bash(aws:*)",
+      "Bash(gcloud:*)",
+      "Bash(az :*)"
+    ],
+    "ask": [
+      "Write",
+      "Edit",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
+    ]
+  }
+}
+```
+
+## Complete Security-Focused Configuration
+
+Here's a comprehensive security-focused configuration you can use as a starting point:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
+      "Bash(npm run:*)",
+      "Bash(npm install:*)",
+      "Bash(npm test:*)",
+      "Bash(npx:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git branch:*)",
+      "Bash(git checkout:*)",
+      "Bash(git fetch:*)",
+      "Bash(git pull:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(pwd:*)",
+      "Bash(which:*)",
+      "Bash(* --help)",
+      "Bash(* --version)"
+    ],
+    "deny": [
+      "Read(**/.env*)",
+      "Read(**/secrets*)",
+      "Read(**/credentials*)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(**/*_rsa*)",
+      "Read(**/.ssh/*)",
+      "Read(**/config.production.*)",
+      "Edit(**/.env*)",
+      "Edit(**/secrets*)",
+      "Write(**/.env*)",
+      "Write(**/secrets*)",
+      "Bash(rm -rf:*)",
+      "Bash(sudo:*)",
+      "Bash(npm publish:*)",
+      "Bash(git push --force:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(curl:*)",
+      "Bash(wget:*)",
+      "Bash(chmod 777:*)"
+    ],
+    "ask": [
+      "Bash(git push:*)"
+    ]
+  }
+}
+```
+
+## Using Yes to All for Security Audits
+
+The [Yes to All tool](/) can help you maintain secure configurations:
+
+### Audit Your Current Settings
+
+1. Upload your global `~/.claude/settings.json`
+2. Upload each project's `.claude/settings.json`
+3. Review the merged view to see all active permissions
+4. Check for missing security rules
+
+### Create a Secure Baseline
+
+1. Start with the security-focused template above
+2. Add your project-specific allow rules
+3. Use the merge tool to combine without losing deny rules
+4. Export and save to your global settings
+
+### Review Regularly
+
+Security configurations should be reviewed periodically:
+
+- Are there new sensitive file patterns to block?
+- Are there commands that should move from allow to deny?
+- Are project permissions exposing anything they shouldn't?
+
+## Conclusion
+
+Security doesn't have to conflict with productivity. By using Claude Code's deny rules strategically, you can:
+
+- Protect sensitive files from accidental exposure
+- Block dangerous commands before they execute
+- Maintain broad productivity permissions safely
+- Sleep better knowing your secrets are protected
+
+Start with a security-focused configuration, then add allow rules as needed for your specific workflow. The [Yes to All tool](/) makes it easy to merge and audit your security rules across all your projects.

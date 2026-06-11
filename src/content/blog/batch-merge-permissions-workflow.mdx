@@ -1,0 +1,284 @@
+---
+title: "Claude Code: Merge Permissions from All Your Projects at Once"
+slug: "batch-merge-permissions-workflow"
+date: "2026-01-20"
+description: "Create a comprehensive global settings.json by systematically merging permissions from all your existing Claude Code projects."
+author: "Yes to All Team"
+tags: ["claude-code", "workflow", "automation", "bulk-operations"]
+---
+
+## You've Already Done the Hard Work
+
+If you've been using Claude Code for a while, you probably have permissions scattered across multiple projects. Each project's `.claude/settings.json` contains a tested, approved set of permissions that you've built up over time.
+
+The question is: how do you consolidate all of these into a comprehensive global settings file? That's where the batch consolidation workflow comes in.
+
+## The Batch Consolidation Approach
+
+Instead of starting from scratch or trying to remember what permissions you need, you can systematically merge permissions from all your existing projects. The pattern is simple:
+
+1. Find all your project settings files
+2. Start with your current global settings (or an empty file)
+3. Add each project's settings and merge
+4. Repeat until all projects are consolidated
+5. Export the final comprehensive result
+
+This "add, merge, add, merge" loop builds up a complete permission set based on your actual usage.
+
+<Callout type="info">
+This is essentially a one-time setup process. Once you have comprehensive global settings, you can use the per-project promotion workflow for ongoing maintenance.
+</Callout>
+
+## Step 1: Find All Project Settings
+
+First, locate all the Claude Code settings files across your projects:
+
+```bash
+# Find all settings.json files in your projects directory
+find ~/projects -name "settings.json" -path "*/.claude/*" 2>/dev/null
+```
+
+You might see output like:
+
+```bash
+/Users/you/projects/webapp/.claude/settings.json
+/Users/you/projects/api-server/.claude/settings.json
+/Users/you/projects/cli-tool/.claude/settings.json
+/Users/you/projects/data-pipeline/.claude/settings.json
+/Users/you/projects/mobile-app/.claude/settings.json
+```
+
+<Callout type="tip">
+Make a list of these paths. You'll be working through them one by one.
+</Callout>
+
+## Step 2: Start with Global (or Empty)
+
+Open the [Yes to All tool](/) and start with your base settings:
+
+**If you have existing global settings:**
+
+```bash
+cat ~/.claude/settings.json
+```
+
+Upload or paste this as your starting point.
+
+**If you're starting fresh:**
+
+Use an empty settings structure:
+
+```json
+{
+  "permissions": {
+    "allow": [],
+    "deny": [],
+    "ask": []
+  }
+}
+```
+
+## Step 3: The Add-Merge Loop
+
+Now work through each project systematically:
+
+### Iteration 1: First Project
+
+```bash
+cat ~/projects/webapp/.claude/settings.json
+```
+
+1. Upload or paste the project settings into the tool
+2. Review the permissions shown in the preview
+3. The merged result updates automatically
+4. Continue to the next project
+
+### Iteration 2: Second Project
+
+```bash
+cat ~/projects/api-server/.claude/settings.json
+```
+
+1. Add this as another source file
+2. Review new permissions (some may already exist from the first project)
+3. Continue...
+
+### Continue for All Projects
+
+```bash
+# Keep going through each project
+cat ~/projects/cli-tool/.claude/settings.json
+cat ~/projects/data-pipeline/.claude/settings.json
+cat ~/projects/mobile-app/.claude/settings.json
+```
+
+<Callout type="info">
+As you progress, you'll notice fewer new permissions per project. This is expected - many projects share common tools like `npm`, `git`, and basic file operations.
+</Callout>
+
+## Step 4: Review the Final Result
+
+After merging all projects, take a moment to review the consolidated permissions:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
+      "Bash(npm:*)",
+      "Bash(npx:*)",
+      "Bash(git:*)",
+      "Bash(node:*)",
+      "Bash(python:*)",
+      "Bash(pip:*)",
+      "Bash(cargo:*)",
+      "Bash(docker:*)",
+      "Bash(kubectl:*)",
+      "Bash(curl:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
+```
+
+Look for anything unexpected:
+
+- **Overly broad permissions** - Do you really need `Bash(*)` globally?
+- **Sensitive commands** - Database access, deployment tools, credentials
+- **Project-specific tools** - Things that only make sense for one project
+
+<Callout type="warning">
+If you see permissions you don't recognize or don't want globally, you can edit them out before saving. Consider adding suspicious patterns to the deny list instead.
+</Callout>
+
+## Step 5: Add Safety Deny Rules
+
+Before exporting, consider adding deny rules for dangerous operations:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Write",
+      "Edit",
+      "Bash(npm:*)",
+      "Bash(git:*)"
+    ],
+    "deny": [
+      "Bash(rm -rf:*)",
+      "Bash(sudo:*)",
+      "Bash(npm publish:*)",
+      "Bash(git push --force:*)"
+    ],
+    "ask": [
+      "Bash(git push:*)"
+    ]
+  }
+}
+```
+
+## Step 6: Export to Global
+
+Once you're satisfied with the consolidated settings:
+
+1. Click "Copy" or "Download" in the Yes to All tool
+2. Save to your global settings location:
+
+```bash
+# Backup existing settings first
+cp ~/.claude/settings.json ~/.claude/settings.json.backup
+
+# Save the new consolidated settings
+# (paste or move the downloaded file)
+cp merged-settings.json ~/.claude/settings.json
+```
+
+Verify the file is valid JSON:
+
+```bash
+cat ~/.claude/settings.json | python -m json.tool
+```
+
+## Optional: Clean Up Project Settings
+
+With comprehensive global settings in place, you may want to clean up project-level settings:
+
+### Option A: Remove All Project Settings
+
+```bash
+# Remove settings from all projects
+find ~/projects -name "settings.json" -path "*/.claude/*" -delete
+```
+
+### Option B: Keep Project-Specific Only
+
+For each project, edit `.claude/settings.json` to keep only permissions that are truly unique to that project:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Bash(./scripts/deploy.sh:*)",
+      "Bash(psql -d myproject:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
+```
+
+<Callout type="tip">
+Option B is recommended for projects with specialized tooling. Keep the global settings for common operations, and project settings for the unique stuff.
+</Callout>
+
+## Maintenance: Keeping Global Settings Current
+
+After the initial consolidation, maintain your global settings with these practices:
+
+### Periodic Review
+
+Every few weeks, check if any project has accumulated new permissions worth promoting:
+
+```bash
+# Quick diff between project and global
+diff <(cat .claude/settings.json | jq -S .) <(cat ~/.claude/settings.json | jq -S .)
+```
+
+### New Project Pattern
+
+When starting a new project:
+1. Work with your global settings (most things "just work")
+2. Approve new project-specific permissions as needed
+3. Periodically promote useful ones to global using the [Yes to All tool](/)
+
+### Version Control
+
+Consider keeping your global settings in version control:
+
+```bash
+# Create a dotfiles repo or add to existing
+cp ~/.claude/settings.json ~/dotfiles/claude-settings.json
+cd ~/dotfiles && git add . && git commit -m "Update Claude settings"
+```
+
+## The Result
+
+After batch consolidation, you'll have:
+
+- **One comprehensive global settings file** - Based on real usage across all your projects
+- **Minimal per-project overrides** - Only truly unique permissions stay local
+- **Reduced permission prompts** - Claude can work more autonomously across all projects
+- **Clear audit trail** - You know exactly what's allowed and why
+- **Safety guardrails** - Deny rules protect against dangerous operations
+
+## Conclusion
+
+The batch consolidation workflow is perfect for users who have been using Claude Code for a while and want to organize their permissions. Instead of guessing what you need, you're building from proven, tested permissions that have served you well across multiple projects.
+
+Ready to consolidate your permissions? Open the [Yes to All tool](/) and start merging your project settings into a comprehensive global configuration.

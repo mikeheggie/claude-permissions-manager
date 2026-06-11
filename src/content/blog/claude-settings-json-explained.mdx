@@ -1,0 +1,423 @@
+---
+title: "Claude Code Settings.json: A Simple Permissions Guide"
+slug: "claude-settings-json-explained"
+date: "2026-01-18"
+description: "A complete guide to Claude Code's settings.json file structure, permissions, and configuration options for developers."
+author: "Yes to All Team"
+tags: ["claude-code", "configuration", "tutorial", "settings"]
+---
+
+## What is settings.json?
+
+Claude Code uses JSON configuration files to manage what actions it can perform autonomously versus what requires your explicit approval. Understanding these files is key to customizing your Claude Code experience.
+
+## File Locations
+
+Claude Code has a hierarchy of settings files, each serving a different purpose:
+
+### User Settings (Global)
+
+Located at `~/.claude/settings.json`, this file applies to **all** projects on your machine. Permissions granted here work everywhere.
+
+```bash
+# macOS/Linux
+~/.claude/settings.json
+
+# Windows
+%USERPROFILE%\.claude\settings.json
+```
+
+### Project Settings
+
+Located at `project/.claude/settings.json`, this file only applies to the specific project directory. These permissions are scoped and don't affect other projects.
+
+```bash
+your-project/
+├── .claude/
+│   └── settings.json    # Project-specific settings
+├── src/
+└── package.json
+```
+
+### Local Settings (Personal)
+
+Located at `project/.claude/settings.local.json`, this file is for personal preferences that shouldn't be committed to version control. Add this to your `.gitignore`.
+
+```bash
+your-project/
+├── .claude/
+│   ├── settings.json        # Shared with team (committed)
+│   └── settings.local.json  # Personal preferences (gitignored)
+```
+
+### Managed Settings (Enterprise)
+
+For IT/enterprise deployments, managed settings are placed at system-level paths and cannot be overridden by users. These are useful for enforcing security policies.
+
+## Configuration Structure
+
+A typical settings.json file has this structure:
+
+```json
+{
+  "permissions": {
+    "allow": [],
+    "deny": [],
+    "ask": []
+  }
+}
+```
+
+Let's break down each section.
+
+## The Three Permission Categories
+
+Claude Code permissions are organized into three categories that control how Claude behaves when it needs to use a tool.
+
+### allow
+
+Permissions Claude can use without asking. Tools and commands listed here run automatically:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
+      "Bash(npm run:*)"
+    ]
+  }
+}
+```
+
+### deny
+
+Permissions that are blocked. These rules are evaluated **first** and take precedence:
+
+```json
+{
+  "permissions": {
+    "deny": [
+      "Bash(rm -rf:*)",
+      "Bash(sudo:*)",
+      "Read(.env)"
+    ]
+  }
+}
+```
+
+Use `deny` to protect sensitive files or prevent dangerous commands, even if broader patterns are allowed.
+
+### ask
+
+Permissions that require confirmation each time. Claude will prompt you before proceeding:
+
+```json
+{
+  "permissions": {
+    "ask": [
+      "Bash(git push:*)",
+      "Bash(npm publish:*)",
+      "Edit(.env.example)"
+    ]
+  }
+}
+```
+
+Use `ask` for commands you want oversight on but don't want to block entirely.
+
+## Permission Evaluation Order
+
+When Claude needs to use a tool, permissions are evaluated in this order:
+
+1. **Deny rules checked first** - If a deny rule matches, the action is blocked
+2. **Ask rules checked second** - If an ask rule matches, Claude prompts for confirmation
+3. **Allow rules checked last** - If an allow rule matches, the action proceeds
+
+This means you can use broad allow patterns while selectively blocking specific dangerous variations.
+
+## Settings Precedence Hierarchy
+
+When multiple settings files exist, they're merged with this precedence (highest to lowest):
+
+1. **Managed settings** - Cannot be overridden (enterprise deployments)
+2. **Command line arguments** - Flags passed when starting Claude Code
+3. **Local settings** - `settings.local.json` (personal preferences)
+4. **Project settings** - `settings.json` (team/project)
+5. **User settings** - `~/.claude/settings.json` (global defaults)
+
+Higher precedence settings take priority when the same permission appears in multiple files.
+
+## Basic Tool Permissions
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep"
+    ]
+  }
+}
+```
+
+These are the core file operation tools:
+
+- **Read** - Read file contents
+- **Write** - Create new files
+- **Edit** - Modify existing files
+- **Glob** - Search for files by pattern
+- **Grep** - Search within file contents
+
+## Bash Command Permissions
+
+Bash permissions use pattern syntax to control what shell commands Claude can run.
+
+### Prefix Matching (`:*`)
+
+The `:*` pattern matches commands starting with the specified prefix:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run:*)",
+      "Bash(git commit:*)",
+      "Bash(cargo build:*)"
+    ]
+  }
+}
+```
+
+- `Bash(npm run:*)` - Allows `npm run test`, `npm run build`, etc.
+- `Bash(git commit:*)` - Allows `git commit -m "message"`, `git commit --amend`, etc.
+- `Bash(cargo build:*)` - Allows `cargo build`, `cargo build --release`, etc.
+
+### Glob Matching (`*`)
+
+The `*` without a colon matches patterns anywhere in the command:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Bash(* --version)",
+      "Bash(* --help)"
+    ]
+  }
+}
+```
+
+- `Bash(* --version)` - Allows any command ending with `--version`
+- `Bash(* --help)` - Allows any command ending with `--help`
+
+### Specific Command Permissions
+
+Be precise about which commands are allowed:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm test:*)",
+      "Bash(git status:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
+    ]
+  }
+}
+```
+
+This grants permission only for specific npm and git operations.
+
+### Full Wildcard Permission (Not Recommended)
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Bash(*)"
+    ]
+  }
+}
+```
+
+While this allows all bash commands, it's not recommended for security reasons. Be explicit about what you allow.
+
+## MCP Servers
+
+MCP (Model Context Protocol) servers extend Claude's capabilities. Configure them in a separate `mcpServers` section:
+
+```json
+{
+  "permissions": {
+    "allow": ["mcp__filesystem"]
+  },
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@anthropic/mcp-filesystem", "/path/to/allowed/directory"]
+    }
+  }
+}
+```
+
+## Best Practices
+
+### 1. Start Restrictive, Expand as Needed
+
+Begin with minimal permissions and add more as you understand your workflow:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep"
+    ],
+    "deny": [],
+    "ask": [
+      "Write",
+      "Edit"
+    ]
+  }
+}
+```
+
+### 2. Use Deny Rules for Safety
+
+Block dangerous operations even with broad allow patterns:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm:*)",
+      "Bash(git:*)"
+    ],
+    "deny": [
+      "Bash(npm publish:*)",
+      "Bash(git push --force:*)"
+    ]
+  }
+}
+```
+
+### 3. Use Specific Patterns
+
+Instead of broad wildcards, specify exactly what you need:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run lint:*)",
+      "Bash(npm run test:*)",
+      "Bash(npm run build:*)"
+    ]
+  }
+}
+```
+
+### 4. Keep Project and Global Separate
+
+- **Global**: Common tools you use in every project (git, npm basics)
+- **Project**: Specialized commands for that specific codebase
+
+### 5. Review Periodically
+
+Audit your settings.json files occasionally to remove permissions you no longer need.
+
+## Common Permission Sets
+
+### Web Development
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
+      "Bash(npm:*)",
+      "Bash(npx:*)",
+      "Bash(git:*)",
+      "Bash(node:*)"
+    ],
+    "deny": [
+      "Bash(npm publish:*)"
+    ],
+    "ask": []
+  }
+}
+```
+
+### Python Development
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
+      "Bash(python:*)",
+      "Bash(pip:*)",
+      "Bash(pytest:*)",
+      "Bash(git:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
+```
+
+### Rust Development
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
+      "Bash(cargo:*)",
+      "Bash(rustc:*)",
+      "Bash(git:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
+```
+
+## Merging Settings Easily
+
+Manually editing JSON files can be tedious and error-prone. Use the [Yes to All tool](/) to:
+
+1. **Upload or paste** your settings files using the upload area or paste button
+2. **Add multiple files** - the app merges them in order (later files take priority)
+3. **Resolve conflicts** - see if the same pattern exists in different categories
+4. **Review the merged result** in the preview panel
+5. **Export** using Copy, Download, or Save As buttons
+
+This visual approach makes permission management much easier than manually editing JSON.
+
+## Conclusion
+
+Understanding settings.json is essential for a smooth Claude Code experience. Start with conservative permissions, expand as needed, and use tools like Yes to All to manage your settings efficiently.
