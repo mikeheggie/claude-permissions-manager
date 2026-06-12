@@ -1,6 +1,6 @@
 {
   "name": "claude-permissions-manager",
-  "description": "Merge Claude Code settings.json permission files: upload, resolve conflicts, review the diff, and export the result",
+  "description": "Merge Claude Code settings.json and settings.local.json files: upload, resolve conflicts, review the diff, and export the result",
   "private": true,
   "version": "1.0.0",
   "type": "module",
