@@ -5,7 +5,7 @@
  * with an optional text label (used in page headers and footers).
  */
 
-export const REPO_URL = 'https://github.com/mheggie-magnet/claude-permissions-manager'
+export const REPO_URL = 'https://github.com/mikeheggie/claude-permissions-manager'
 
 export interface GitHubMarkProps {
   /** Classes for the svg element (size/color) */
